@@ -563,6 +563,7 @@ textInput.addEventListener('keydown', function(e) {
 // ── 음성 입력 (Safari 호환) ───────────────────────────────
 var recognition = null;
 var isRecording = false;
+var voiceSaved = false;
 
 function toggleVoice() {
   if (isRecording) {
@@ -576,6 +577,7 @@ function toggleVoice() {
     return;
   }
 
+  voiceSaved = false;
   recognition = new SpeechRecognition();
   recognition.lang = 'ko-KR';
   recognition.continuous = false;
@@ -597,7 +599,8 @@ function toggleVoice() {
     var recognized = final || interim;
     document.getElementById('textInput').value = recognized;
     sendBtn.disabled = !recognized.trim();
-    if (final) {
+    if (final && !voiceSaved) {
+      voiceSaved = true;
       addLog(final.trim(), true);
       document.getElementById('textInput').value = '';
       sendBtn.disabled = true;

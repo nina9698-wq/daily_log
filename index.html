@@ -462,7 +462,7 @@ function renderLogs() {
     groups[key].push(log);
   }
 
-  var sortedDates = Object.keys(groups).sort(function(a,b){ return b > a ? 1 : -1; });
+  var sortedDates = Object.keys(groups).sort(function(a,b){ return a > b ? 1 : -1; });
 
   for (var d = 0; d < sortedDates.length; d++) {
     var dateKey = sortedDates[d];
@@ -521,10 +521,11 @@ function addLog(text, isVoice) {
     dateKey: formatDateKey(now),
     voice: !!isVoice
   };
-  logs.unshift(log);
+  logs.push(log);
   saveLogs(logs);
   renderLogs();
   showToast(isVoice ? '🎤 음성 기록 완료!' : '✅ 기록 완료!');
+  setTimeout(function(){ window.scrollTo(0, document.body.scrollHeight); }, 100);
 }
 
 function deleteLog(id) {
@@ -581,7 +582,7 @@ function toggleVoice() {
   recognition = new SpeechRecognition();
   recognition.lang = 'ko-KR';
   recognition.continuous = false;
-  recognition.interimResults = true;
+  recognition.interimResults = false;
 
   recognition.onstart = function() {
     isRecording = true;
@@ -590,18 +591,9 @@ function toggleVoice() {
   };
 
   recognition.onresult = function(e) {
-    var interim = '';
-    var final = '';
-    for (var i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) final += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
-    }
-    var recognized = final || interim;
-    document.getElementById('textInput').value = recognized;
-    sendBtn.disabled = !recognized.trim();
-    if (final && !voiceSaved) {
-      voiceSaved = true;
-      addLog(final.trim(), true);
+    var text = e.results[0][0].transcript;
+    if (text && text.trim()) {
+      addLog(text.trim(), true);
       document.getElementById('textInput').value = '';
       sendBtn.disabled = true;
       stopVoice();
@@ -650,7 +642,7 @@ function exportLogs() {
     groups[log.dateKey].push(log);
   }
 
-  var sortedDates = Object.keys(groups).sort(function(a,b){ return b > a ? 1 : -1; });
+  var sortedDates = Object.keys(groups).sort(function(a,b){ return a > b ? 1 : -1; });
   for (var d = 0; d < sortedDates.length; d++) {
     var key = sortedDates[d];
     text += '📅 ' + groups[key][0].dateStr + '\n';

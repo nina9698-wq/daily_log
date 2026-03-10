@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="하루기록">
+<title>하루 기록</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --surface2: #efefef;
+    --accent: #5b4fe8;
+    --accent2: #ff6a9e;
+    --text: #1a1a2e;
+    --text-muted: #888899;
+    --border: #dddde8;
+    --success: #22c55e;
+    --record: #ff4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', -apple-system, sans-serif;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+    padding-bottom: 160px;
+  }
+
+  .header {
+    padding: 52px 20px 16px;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-top {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    -webkit-align-items: center;
+    align-items: center;
+  }
+
+  .app-title {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .app-title span { color: var(--accent); }
+
+  .today-date {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .count-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .timeline {
+    -webkit-flex: 1;
+    flex: 1;
+    padding: 20px 20px 0;
+  }
+
+  .empty-state {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 80px 20px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .empty-icon { font-size: 48px; opacity: 0.4; }
+
+  .empty-state p { font-size: 14px; line-height: 1.8; }
+
+  .date-sep {
+    font-size: 14px;
+    color: var(--text-muted);
+    padding: 6px 0 14px;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .log-item {
+    display: -webkit-flex;
+    display: flex;
+    gap: 14px;
+    padding-bottom: 20px;
+    position: relative;
+    -webkit-animation: slideIn 0.3s ease;
+    animation: slideIn 0.3s ease;
+  }
+
+  @-webkit-keyframes slideIn {
+    from { opacity: 0; -webkit-transform: translateY(-8px); transform: translateY(-8px); }
+    to { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); }
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .log-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 34px;
+    top: 36px;
+    bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .time-col {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-items: center;
+    align-items: center;
+    min-width: 56px;
+  }
+
+  .time-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-top: 8px;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .time-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .log-card {
+    -webkit-flex: 1;
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+
+  .memo-text {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  .voice-badge {
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px;
+    -webkit-appearance: none;
+  }
+
+  /* 입력창 */
+  .input-panel {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 14px 16px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    z-index: 200;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+  }
+
+  .now-time {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .now-time span { color: var(--accent); }
+
+  .input-row {
+    display: -webkit-flex;
+    display: flex;
+    gap: 10px;
+    -webkit-align-items: flex-end;
+    align-items: flex-end;
+  }
+
+  .text-input {
+    -webkit-flex: 1;
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Noto Sans KR', -apple-system, sans-serif;
+    font-size: 16px; /* 16px이상이어야 Safari 자동 줌 방지 */
+    outline: none;
+    resize: none;
+    min-height: 46px;
+    max-height: 120px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .text-input::-webkit-input-placeholder { color: var(--text-muted); }
+  .text-input:focus { border-color: var(--accent); }
+
+  .btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .btn-voice {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    -webkit-transition: all 0.2s;
+    transition: all 0.2s;
+  }
+
+  .btn-voice.recording {
+    background: rgba(255,68,68,0.2);
+    border-color: var(--record);
+  }
+
+  .btn-send {
+    background: linear-gradient(135deg, #7c6aff, #5b4fe8);
+    color: white;
+  }
+
+  .btn-send:disabled { opacity: 0.35; }
+
+  .voice-status {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--record);
+    min-height: 16px;
+  }
+
+  /* 내보내기 버튼 */
+  .export-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    -webkit-appearance: none;
+  }
+
+  /* 토스트 */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    -webkit-transform: translateX(-50%) translateY(-10px);
+    transform: translateX(-50%) translateY(-10px);
+    background: var(--success);
+    color: #000;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    -webkit-transition: all 0.3s;
+    transition: all 0.3s;
+    z-index: 999;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    opacity: 1;
+    -webkit-transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="app-title">하루 <span>기록</span></div>
+      <div class="today-date" id="headerDate"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="export-btn" onclick="exportLogs()">📋 내보내기</button>
+      <div class="count-badge" id="countBadge">0개</div>
+    </div>
+  </div>
+</div>
+
+<div class="timeline" id="timeline">
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">📝</div>
+    <p>아직 기록이 없어요.<br>아래에서 메모를 입력하거나<br>🎤 버튼으로 말해보세요!</p>
+  </div>
+</div>
+
+<div class="input-panel">
+  <div class="now-time">현재 시각: <span id="nowTime"></span></div>
+  <div class="input-row">
+    <textarea class="text-input" id="textInput" placeholder="지금 한 일을 입력하세요..." rows="1"></textarea>
+    <button class="btn btn-voice" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+    <button class="btn btn-send" id="sendBtn" onclick="submitLog()" disabled>✓</button>
+  </div>
+  <div class="voice-status" id="voiceStatus"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 저장소 (Safari 호환: try-catch로 감싸기) ──────────────
+var STORAGE_KEY = 'haru-logs-v2';
+
+function loadLogs() {
+  try {
+    var data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveLogs(logs) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+  } catch(e) {
+    showToast('⚠️ 저장 실패 (개인정보 보호 모드 해제 필요)');
+  }
+}
+
+var logs = loadLogs();
+
+// ── 시간 (Safari 호환 방식) ────────────────────────────────
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function formatTime(date) {
+  return pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+}
+
+function formatDate(date) {
+  var days = ['일','월','화','수','목','금','토'];
+  return date.getFullYear() + '년 ' +
+    (date.getMonth()+1) + '월 ' +
+    date.getDate() + '일 (' + days[date.getDay()] + ')';
+}
+
+function formatDateKey(date) {
+  return date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate());
+}
+
+// 시계 업데이트
+function updateClock() {
+  var now = new Date();
+  var el = document.getElementById('nowTime');
+  var dateEl = document.getElementById('headerDate');
+  if (el) el.textContent = formatTime(now);
+  if (dateEl) dateEl.textContent = formatDate(now);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── 렌더링 ────────────────────────────────────────────────
+function renderLogs() {
+  var timeline = document.getElementById('timeline');
+  var countBadge = document.getElementById('countBadge');
+  countBadge.textContent = logs.length + '개';
+
+  if (logs.length === 0) {
+    timeline.innerHTML = '';
+    var empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.innerHTML = '<div class="empty-icon">📝</div><p>아직 기록이 없어요.<br>아래에서 메모를 입력하거나<br>🎤 버튼으로 말해보세요!</p>';
+    timeline.appendChild(empty);
+    return;
+  }
+
+  timeline.innerHTML = '';
+
+  // 날짜별 그룹
+  var groups = {};
+  for (var i = 0; i < logs.length; i++) {
+    var log = logs[i];
+    var key = log.dateKey;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(log);
+  }
+
+  var sortedDates = Object.keys(groups).sort(function(a,b){ return b > a ? 1 : -1; });
+
+  for (var d = 0; d < sortedDates.length; d++) {
+    var dateKey = sortedDates[d];
+    var dayLogs = groups[dateKey];
+
+    var sep = document.createElement('div');
+    sep.className = 'date-sep';
+    sep.textContent = dayLogs[0].dateStr;
+    timeline.appendChild(sep);
+
+    for (var j = 0; j < dayLogs.length; j++) {
+      timeline.appendChild(buildLogItem(dayLogs[j]));
+    }
+  }
+}
+
+function buildLogItem(log) {
+  var item = document.createElement('div');
+  item.className = 'log-item';
+
+  var timeCol = document.createElement('div');
+  timeCol.className = 'time-col';
+  timeCol.innerHTML = '<div class="time-dot"></div><div class="time-text">' + log.time + '</div>';
+
+  var card = document.createElement('div');
+  card.className = 'log-card';
+
+  var inner = '';
+  if (log.voice) inner += '<div class="voice-badge">🎤 음성 입력</div>';
+  inner += '<div class="memo-text">' + escapeHtml(log.text) + '</div>';
+  inner += '<button class="delete-btn" onclick="deleteLog(\'' + log.id + '\')">✕</button>';
+  card.innerHTML = inner;
+
+  item.appendChild(timeCol);
+  item.appendChild(card);
+  return item;
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>');
+}
+
+// ── 기록 추가/삭제 ────────────────────────────────────────
+function addLog(text, isVoice) {
+  if (!text || !text.trim()) return;
+  var now = new Date();
+  var log = {
+    id: String(Date.now()),
+    text: text.trim(),
+    time: formatTime(now),
+    dateStr: formatDate(now),
+    dateKey: formatDateKey(now),
+    voice: !!isVoice
+  };
+  logs.unshift(log);
+  saveLogs(logs);
+  renderLogs();
+  showToast(isVoice ? '🎤 음성 기록 완료!' : '✅ 기록 완료!');
+}
+
+function deleteLog(id) {
+  if (!confirm('이 기록을 삭제할까요?')) return;
+  logs = logs.filter(function(l){ return l.id !== id; });
+  saveLogs(logs);
+  renderLogs();
+}
+
+function submitLog() {
+  var val = document.getElementById('textInput').value;
+  if (!val.trim()) return;
+  addLog(val, false);
+  document.getElementById('textInput').value = '';
+  document.getElementById('textInput').style.height = '';
+  document.getElementById('sendBtn').disabled = true;
+}
+
+// ── 텍스트 입력 ───────────────────────────────────────────
+var textInput = document.getElementById('textInput');
+var sendBtn = document.getElementById('sendBtn');
+
+textInput.addEventListener('input', function() {
+  sendBtn.disabled = !this.value.trim();
+  this.style.height = '';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+textInput.addEventListener('keydown', function(e) {
+  if (e.keyCode === 13 && !e.shiftKey) {
+    e.preventDefault();
+    submitLog();
+  }
+});
+
+// ── 음성 입력 (Safari 호환) ───────────────────────────────
+var recognition = null;
+var isRecording = false;
+
+function toggleVoice() {
+  if (isRecording) {
+    stopVoice();
+    return;
+  }
+
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showToast('⚠️ 음성 인식 미지원 브라우저입니다');
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = 'ko-KR';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onstart = function() {
+    isRecording = true;
+    document.getElementById('voiceBtn').classList.add('recording');
+    document.getElementById('voiceStatus').textContent = '🔴 듣고 있어요... 말씀하세요';
+  };
+
+  recognition.onresult = function(e) {
+    var interim = '';
+    var final = '';
+    for (var i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    var recognized = final || interim;
+    document.getElementById('textInput').value = recognized;
+    sendBtn.disabled = !recognized.trim();
+    if (final) {
+      addLog(final.trim(), true);
+      document.getElementById('textInput').value = '';
+      sendBtn.disabled = true;
+      stopVoice();
+    }
+  };
+
+  recognition.onerror = function(e) {
+    var msgs = {
+      'not-allowed': '마이크 권한을 허용해주세요',
+      'no-speech': '음성이 감지되지 않았어요',
+      'network': '네트워크 오류가 발생했어요'
+    };
+    showToast('⚠️ ' + (msgs[e.error] || '음성 인식 오류'));
+    stopVoice();
+  };
+
+  recognition.onend = function() { stopVoice(); };
+
+  try {
+    recognition.start();
+  } catch(e) {
+    showToast('⚠️ 음성 인식을 시작할 수 없어요');
+    stopVoice();
+  }
+}
+
+function stopVoice() {
+  isRecording = false;
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+    recognition = null;
+  }
+  document.getElementById('voiceBtn').classList.remove('recording');
+  document.getElementById('voiceStatus').textContent = '';
+}
+
+// ── 내보내기 ──────────────────────────────────────────────
+function exportLogs() {
+  if (logs.length === 0) { showToast('기록이 없어요!'); return; }
+
+  var text = '📋 하루 기록\n' + '='.repeat(28) + '\n\n';
+  var groups = {};
+  for (var i = 0; i < logs.length; i++) {
+    var log = logs[i];
+    if (!groups[log.dateKey]) groups[log.dateKey] = [];
+    groups[log.dateKey].push(log);
+  }
+
+  var sortedDates = Object.keys(groups).sort(function(a,b){ return b > a ? 1 : -1; });
+  for (var d = 0; d < sortedDates.length; d++) {
+    var key = sortedDates[d];
+    text += '📅 ' + groups[key][0].dateStr + '\n';
+    text += '-'.repeat(24) + '\n';
+    var dayLogs = groups[key].slice().reverse();
+    for (var j = 0; j < dayLogs.length; j++) {
+      var l = dayLogs[j];
+      text += l.time + '  ' + (l.voice ? '[음성] ' : '') + l.text + '\n';
+    }
+    text += '\n';
+  }
+
+  var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '하루기록_' + formatDateKey(new Date()) + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📋 파일 저장 완료!');
+}
+
+// ── 토스트 ────────────────────────────────────────────────
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+
+// ── 초기화 ────────────────────────────────────────────────
+renderLogs();
+</script>
+</body>
+</html>
